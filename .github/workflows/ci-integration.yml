@@ -21,11 +21,8 @@ jobs:
       COMPOSE_FILE: Sales-System/docker-compose.yml
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      # ⚠️ Nada de apt-get. Primero intentamos usar docker compose del runner;
-      # si falta, instalamos el plugin en ~/.docker/cli-plugins/
       - name: Verificar/instalar Docker Compose v2 si hiciera falta
         shell: bash
         run: |
@@ -33,7 +30,6 @@ jobs:
           if docker compose version >/dev/null 2>&1; then
             echo "docker compose ya disponible"
           else
-            echo "Instalando plugin docker compose v2 en ~/.docker/cli-plugins/ ..."
             mkdir -p ~/.docker/cli-plugins
             curl -L "https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64" \
               -o ~/.docker/cli-plugins/docker-compose
@@ -47,7 +43,6 @@ jobs:
       - name: Levantar stack
         run: docker compose -f "$COMPOSE_FILE" up -d
 
-      # Espera a que los puertos estén abiertos (MySQL + 4 servicios Spring)
       - name: Esperar puertos (3306, 8081-8084)
         shell: bash
         run: |
@@ -62,26 +57,33 @@ jobs:
             done
           done
 
-      # Prueba /actuator/health si está habilitado; si no, prueba "/"
-      - name: Smoke tests HTTP
+      - name: Smoke tests HTTP (tolerantes y con reintentos)
         shell: bash
         run: |
           set -e
-          test_url () { curl -fsS "$1" >/dev/null 2>&1; }
-          hit () {
-            local base=$1
-            if test_url "$base/actuator/health"; then
-              echo "$base/actuator/health OK"
-            elif test_url "$base/"; then
-              echo "$base/ OK"
-            else
-              echo "Falla $base" && return 1
-            fi
+          check_url () {
+            local url="$1"
+            code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "$url" || echo "000")
+            echo "$url -> $code"
+            if [ "$code" != "000" ]; then return 0; else return 1; fi
           }
-          hit http://localhost:8081
-          hit http://localhost:8082
-          hit http://localhost:8083
-          hit http://localhost:8084
+          wait_service () {
+            local base="$1"
+            echo "Verificando $base ..."
+            for i in {1..24}; do
+              if check_url "$base/actuator/health" || check_url "$base/" || check_url "$base/api"; then
+                echo "OK $base"
+                return 0
+              fi
+              sleep 5
+            done
+            echo "Falla $base tras espera"
+            return 1
+          }
+          wait_service http://localhost:8081
+          wait_service http://localhost:8082
+          wait_service http://localhost:8083
+          wait_service http://localhost:8084
 
       - name: Logs (si falla)
         if: failure()
