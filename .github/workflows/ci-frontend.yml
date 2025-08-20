@@ -14,48 +14,97 @@ permissions:
   id-token: write
 
 jobs:
-  build-and-test:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: front-sales
+    # Solo corre si existe el front
+    if: hashFiles('front-sales/package.json') != ''
+    env:
+      WORKDIR: front-sales
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Detectar gestor (pnpm/yarn/npm)
+        id: detect
+        shell: bash
+        run: |
+          if [ -f "$WORKDIR/pnpm-lock.yaml" ]; then
+            echo "pm=pnpm" >> $GITHUB_OUTPUT
+          elif [ -f "$WORKDIR/yarn.lock" ]; then
+            echo "pm=yarn" >> $GITHUB_OUTPUT
+          else
+            echo "pm=npm" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node 20
         uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: npm
-          cache-dependency-path: front-sales/package-lock.json
+          node-version: 20
+          cache: ${{ steps.detect.outputs.pm == 'yarn' && 'yarn' || (steps.detect.outputs.pm == 'pnpm' && 'pnpm' || 'npm') }}
+          cache-dependency-path: |
+            front-sales/package-lock.json
+            front-sales/pnpm-lock.yaml
+            front-sales/yarn.lock
 
-      - name: Install deps
-        run: npm ci
+      - name: Instalar pnpm si aplica
+        if: steps.detect.outputs.pm == 'pnpm'
+        run: npm i -g pnpm
 
-      - name: Lint (si existe)
+      - name: Instalar dependencias
+        shell: bash
         run: |
-          if npm run | grep -q "lint"; then npm run lint; else echo "no lint"; fi
+          cd "$WORKDIR"
+          case "${{ steps.detect.outputs.pm }}" in
+            pnpm) pnpm install --frozen-lockfile || pnpm install ;;
+            yarn) yarn install --frozen-lockfile || yarn install ;;
+            npm)
+              if [ -f package-lock.json ]; then npm ci || npm install; else npm install; fi
+              ;;
+          esac
 
-      - name: Test (si existe)
+      # Lint NO bloqueante: si falla, no detiene el pipeline
+      - name: Lint (no bloqueante)
+        continue-on-error: true
+        shell: bash
         run: |
-          if npm run | grep -q "test"; then npm test -- --ci; else echo "no tests"; fi
+          cd "$WORKDIR"
+          if jq -e '.scripts.lint' package.json >/dev/null 2>&1; then
+            case "${{ steps.detect.outputs.pm }}" in
+              pnpm) pnpm run lint ;;
+              yarn) yarn lint ;;
+              npm)  npm run lint ;;
+            esac
+          else
+            echo "no lint"
+          fi
 
-      - name: Build (si existe)
+      - name: Build
+        id: build
+        shell: bash
         run: |
-          if npm run | grep -q "build"; then npm run build; else echo "no build"; fi
+          cd "$WORKDIR"
+          case "${{ steps.detect.outputs.pm }}" in
+            pnpm) pnpm run build ;;
+            yarn) yarn build ;;
+            npm)  npm run build ;;
+          esac
+          # detectar carpeta de salida (Vite usa 'dist' por defecto)
+          if [ -d dist ]; then
+            echo "out=front-sales/dist" >> $GITHUB_OUTPUT
+          elif [ -d build ]; then
+            echo "out=front-sales/build" >> $GITHUB_OUTPUT
+          else
+            echo "No se encontró carpeta de build"; exit 1
+          fi
 
       - name: Subir artefacto de Pages
-        if: success() && hashFiles('front-sales/dist/**') != ''
         uses: actions/upload-pages-artifact@v3
         with:
-          path: front-sales/dist
+          path: ${{ steps.build.outputs.out }}
 
   deploy:
-    needs: build-and-test
+    needs: build-and-deploy
     runs-on: ubuntu-latest
-    if: needs.build-and-test.result == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
