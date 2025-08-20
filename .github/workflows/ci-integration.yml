@@ -3,48 +3,77 @@ name: CI Integración (docker-compose)
 on:
   push:
     branches: [ "main" ]
-    paths: [ "Sales-System/**", "mysql-init/**", "docker-compose.yml", ".github/workflows/ci-integration.yml" ]
+    paths:
+      - "Sales-System/**"
+      - ".github/workflows/ci-integration.yml"
   pull_request:
     branches: [ "main" ]
-    paths: [ "Sales-System/**", "mysql-init/**", "docker-compose.yml", ".github/workflows/ci-integration.yml" ]
+    paths:
+      - "Sales-System/**"
+      - ".github/workflows/ci-integration.yml"
 
 jobs:
   compose-test:
     runs-on: ubuntu-latest
     timeout-minutes: 25
 
+    env:
+      COMPOSE_FILE: Sales-System/docker-compose.yml
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build imágenes locales
-        run: docker compose build
-        # si tu compose no está en la raíz: docker compose -f ruta/compose.yml build
-
-      - name: Up stack
-        run: docker compose up -d
-
-      - name: Esperar servicios (ajusta puertos/rutas)
+      - name: Instalar utilidades (compose, curl, netcat)
         run: |
-          for i in {1..60}; do
-            if curl -fsS http://localhost:3003/health >/dev/null 2>&1; then
-              echo "OK"; exit 0
-            fi
-            echo "esperando..."; sleep 5
-          done
-          echo "Timeout"; exit 1
+          sudo apt-get update
+          sudo apt-get install -y docker-compose-plugin curl netcat-traditional
+          docker compose version
 
-      - name: Smoke tests (ajusta endpoints)
+      - name: Build imágenes locales
+        run: docker compose -f "$COMPOSE_FILE" build
+
+      - name: Levantar stack
+        run: docker compose -f "$COMPOSE_FILE" up -d
+
+      # Espera general: MySQL (3306) + puertos de microservicios (8081..8084)
+      - name: Esperar puertos (MySQL y servicios)
         run: |
           set -e
-          curl -f http://localhost:3001/api/clientes
-          curl -f http://localhost:3002/api/productos
-          curl -f http://localhost:3003/api/usuarios
-          curl -f http://localhost:3004/api/ventas
+          for port in 3306 8081 8082 8083 8084; do
+            echo "Esperando puerto $port..."
+            for i in {1..60}; do
+              if nc -z 127.0.0.1 $port; then
+                echo "Puerto $port OK"
+                break
+              fi
+              sleep 5
+            done
+          done
+
+      # Smoke tests Spring: intenta primero /actuator/health y si no existe, / (raíz)
+      - name: Smoke tests HTTP
+        run: |
+          set -e
+          test_url () { curl -fsS "$1" >/dev/null 2>&1; }
+          hit () {
+            local base=$1
+            if test_url "$base/actuator/health"; then
+              echo "$base/actuator/health OK"
+            elif test_url "$base/"; then
+              echo "$base/ OK"
+            else
+              echo "Falla $base" && return 1
+            fi
+          }
+          hit http://localhost:8081
+          hit http://localhost:8082
+          hit http://localhost:8083
+          hit http://localhost:8084
 
       - name: Logs (si falla)
         if: failure()
-        run: docker compose logs --no-color > compose-logs.txt || true
+        run: docker compose -f "$COMPOSE_FILE" logs --no-color > compose-logs.txt || true
 
       - name: Artefacto logs
         if: always()
@@ -55,4 +84,4 @@ jobs:
 
       - name: Down
         if: always()
-        run: docker compose down -v
+        run: docker compose -f "$COMPOSE_FILE" down -v
