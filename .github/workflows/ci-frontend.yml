@@ -16,15 +16,25 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    # Solo corre si existe el front
-    if: hashFiles('front-sales/package.json') != ''
     env:
       WORKDIR: front-sales
 
     steps:
       - uses: actions/checkout@v4
 
+      # ✅ comprobamos que existe el frontend
+      - name: Verificar que existe front-sales
+        id: chk
+        run: |
+          if [ -f "$WORKDIR/package.json" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "No existe $WORKDIR/package.json; se omite el job."
+          fi
+
       - name: Detectar gestor (pnpm/yarn/npm)
+        if: steps.chk.outputs.exists == 'true'
         id: detect
         shell: bash
         run: |
@@ -37,6 +47,7 @@ jobs:
           fi
 
       - name: Setup Node 20
+        if: steps.chk.outputs.exists == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -47,23 +58,23 @@ jobs:
             front-sales/yarn.lock
 
       - name: Instalar pnpm si aplica
-        if: steps.detect.outputs.pm == 'pnpm'
+        if: steps.chk.outputs.exists == 'true' && steps.detect.outputs.pm == 'pnpm'
         run: npm i -g pnpm
 
       - name: Instalar dependencias
+        if: steps.chk.outputs.exists == 'true'
         shell: bash
         run: |
           cd "$WORKDIR"
           case "${{ steps.detect.outputs.pm }}" in
             pnpm) pnpm install --frozen-lockfile || pnpm install ;;
             yarn) yarn install --frozen-lockfile || yarn install ;;
-            npm)
-              if [ -f package-lock.json ]; then npm ci || npm install; else npm install; fi
-              ;;
+            npm)  if [ -f package-lock.json ]; then npm ci || npm install; else npm install; fi ;;
           esac
 
-      # Lint NO bloqueante: si falla, no detiene el pipeline
+      # Lint NO bloqueante
       - name: Lint (no bloqueante)
+        if: steps.chk.outputs.exists == 'true'
         continue-on-error: true
         shell: bash
         run: |
@@ -79,6 +90,7 @@ jobs:
           fi
 
       - name: Build
+        if: steps.chk.outputs.exists == 'true'
         id: build
         shell: bash
         run: |
@@ -88,7 +100,6 @@ jobs:
             yarn) yarn build ;;
             npm)  npm run build ;;
           esac
-          # detectar carpeta de salida (Vite usa 'dist' por defecto)
           if [ -d dist ]; then
             echo "out=front-sales/dist" >> $GITHUB_OUTPUT
           elif [ -d build ]; then
@@ -98,6 +109,7 @@ jobs:
           fi
 
       - name: Subir artefacto de Pages
+        if: steps.chk.outputs.exists == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ steps.build.outputs.out }}
