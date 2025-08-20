@@ -1,0 +1,261 @@
+.ventas-bg {
+  min-height: calc(100vh - 70px); /* Ajusta 70px si tu header es más alto */
+  background: linear-gradient(135deg, #222327 0%, #33343c 100%);
+  padding: 40px 0;
+  width: 100vw;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  /* No uses align-items: center aquí, o tu contenido bajará demasiado si hay header */
+}
+
+.ventas-container {
+  background: rgba(255,255,255,0.97);
+  border-radius: 2rem;
+  box-shadow: 0 10px 36px rgba(0,0,0,0.17), 0 0px 10px rgba(0,0,0,0.07);
+  padding: 2.5rem 2.2rem 2rem 2.2rem;
+  width: 100%;
+  max-width: 950px;
+  margin: 0 auto;
+  min-height: 540px; /* Opcional: Para evitar que se vea "chico" en pantallas grandes */
+}
+
+@media (max-width: 1100px) {
+  .ventas-container {
+    max-width: 97vw;
+    padding: 1.5rem 1rem 1rem 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .ventas-bg {
+    padding: 12px 0;
+  }
+  .ventas-container {
+    border-radius: 1.2rem;
+    padding: 1rem 0.5rem;
+  }
+}
+
+/* Resto del CSS igual */
+
+
+.ventas-title {
+  font-size: 2.2rem;
+  font-weight: bold;
+  text-align: left;
+  color: #232526;
+  letter-spacing: .2px;
+  margin-bottom: 1.7rem;
+}
+
+.ventas-btn-principal {
+  background: linear-gradient(90deg, #356eff 0%, #2584ff 100%);
+  color: #fff;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 1.1rem;
+  font-weight: bold;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 10px #347ae224;
+  cursor: pointer;
+  margin-bottom: 22px;
+  transition: background .16s, transform .13s;
+}
+.ventas-btn-principal:hover {
+  background: linear-gradient(90deg, #2584ff 0%, #356eff 100%);
+  transform: scale(1.04);
+}
+
+.ventas-panel {
+  margin-top: 18px;
+}
+
+.ventas-label {
+  font-weight: 500;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ventas-input,
+.ventas-input-buscar {
+  padding: 0.95rem 1rem;
+  border: 1px solid #dedede;
+  border-radius: 1.2rem;
+  font-size: 1rem;
+  color: #232526;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s;
+  background: #fafafb;
+  margin-left: 10px;
+  margin-bottom: 7px;
+}
+.ventas-input:focus,
+.ventas-input-buscar:focus {
+  border: 1.7px solid #356eff;
+  box-shadow: 0 2px 10px #d3e2ff49;
+  background: #fff;
+}
+.ventas-input-buscar {
+  width: 100%;
+  margin: 14px 0 18px 0;
+}
+
+.ventas-btn-buscar {
+  margin-left: 10px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  background: #356eff;
+  color: #fff;
+  border: none;
+  border-radius: .9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .13s;
+}
+.ventas-btn-buscar:hover {
+  background: #2584ff;
+}
+
+.ventas-cliente {
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: #222;
+  background: #f1f7ff;
+  border-radius: .7rem;
+  padding: 0.4rem 0.8rem;
+  display: inline-block;
+  font-size: 1.06rem;
+}
+
+.ventas-productos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 22px;
+  margin-top: 18px;
+}
+
+.ventas-card-producto {
+  border: 1.2px solid #d6e0f5;
+  border-radius: 1.2rem;
+  background: #fafdff;
+  box-shadow: 0 2px 10px #2474eb11;
+  padding: 16px 17px 14px 17px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 175px;
+  transition: box-shadow .15s;
+}
+.ventas-card-producto:hover {
+  box-shadow: 0 5px 20px #1976d246;
+}
+
+.ventas-prod-nombre {
+  margin: 0 0 7px 0;
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #174075;
+}
+.ventas-prod-precio {
+  margin: 0 0 6px 0;
+  font-weight: 600;
+  color: #2361a7;
+}
+.ventas-prod-stock {
+  margin: 0;
+  font-weight: bold;
+  color: #258a2c;
+  font-size: .99rem;
+}
+.ventas-prod-stock.agotado {
+  color: #c62828;
+}
+
+.ventas-cantidad-control {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+
+  margin-top: 10px;
+}
+.ventas-btn-cantidad {
+  padding: 6px 16px;
+  font-size: 1.25rem;
+  background: #ebf3fe;
+  border: 1px solid #cad4e0;
+  border-radius: .7rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: #347ae2;
+  transition: background .14s;
+}
+.ventas-btn-cantidad:disabled {
+  background: #f6f6f6;
+  color: #b0b0b0;
+  cursor: not-allowed;
+}
+.ventas-input-cantidad {
+  width: 48px;
+  text-align: center;
+  font-size: 1.1rem;
+  padding: 6px;
+  border: 1px solid #d3dbe9;
+  border-radius: .7rem;
+  background: #f5f8fd;
+  color: #222327;
+}
+
+.ventas-total {
+  margin-top: 22px;
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #174075;
+  text-align: right;
+}
+
+.ventas-btn-venta {
+  margin-top: 28px;
+  padding: 13px 33px;
+  font-size: 1.13rem;
+  background: linear-gradient(90deg,#356eff 0%,#2584ff 100%);
+  color: #fff;
+  border: none;
+  border-radius: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 2px 10px #357ae224;
+  transition: background .18s, transform .13s;
+  display: block;
+  margin-left: auto;
+}
+.ventas-btn-venta:hover {
+  background: linear-gradient(90deg,#2584ff 0%,#356eff 100%);
+  transform: scale(1.04);
+}
+
+.ventas-error {
+  color: #d32f2f;
+  background: #ffeaea;
+  border-radius: .7rem;
+  text-align: center;
+  padding: 0.65rem 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-top: 1.1rem;
+  border: 1px solid #ffd3d3;
+}
+.ventas-exito {
+  color: #2e7d32;
+  background: #e4ffea;
+  border-radius: .7rem;
+  text-align: center;
+  padding: 0.65rem 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-top: 1.1rem;
+  border: 1px solid #bbffc7;
+}

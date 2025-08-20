@@ -1,0 +1,64 @@
+.header-main {
+  width: 100%;
+  background: rgba(25,27,36,0.93);
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 40px 14px 30px;
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 2px 12px #23252614;
+  border-bottom-left-radius: 1.2rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.header-user {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-right: 24px;
+  letter-spacing: 0.3px;
+}
+
+.header-nav {
+  display: flex;
+  gap: 22px;
+}
+.header-nav a {
+  color: #b7d2ff;
+  font-weight: 500;
+  text-decoration: none;
+  font-size: 1.01rem;
+  padding: 6px 14px;
+  border-radius: 0.5rem;
+  transition: background .13s, color .13s;
+}
+.header-nav a:hover,
+.header-nav a.active {
+  background: #3579e1;
+  color: #fff;
+}
+
+.header-logout {
+  background: #232a36;
+  color: #fff;
+  font-weight: 500;
+  border: none;
+  border-radius: 0.7rem;
+  padding: 8px 18px;
+  font-size: 1.04rem;
+  margin-left: 25px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px #357ae234;
+  transition: background .13s, transform .13s;
+}
+.header-logout:hover {
+  background: #d32f2f;
+  color: #fff;
+  transform: scale(1.06);
+}

@@ -1,0 +1,117 @@
+.usuarios-bg {
+  min-height: calc(100vh - 70px); /* Ajusta si tu header es más alto */
+  background: linear-gradient(135deg, #222327 0%, #33343c 100%);
+  padding: 40px 0;
+  width: 100vw;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.usuarios-container {
+  background: rgba(255,255,255,0.97);
+  border-radius: 2rem;
+  box-shadow: 0 10px 36px rgba(0,0,0,0.17), 0 0px 10px rgba(0,0,0,0.07);
+  padding: 2.5rem 2.2rem 2rem 2.2rem;
+  width: 100%;
+  max-width: 450px;
+  margin: 0 auto;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.usuarios-container h2 {
+  font-size: 2.2rem;
+  font-weight: bold;
+  text-align: left;
+  color: #232526;
+  letter-spacing: .2px;
+  margin-bottom: 1.7rem;
+}
+
+.usuarios-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.usuarios-form input,
+.usuarios-form select {
+  padding: 0.95rem 1rem;
+  border: 1px solid #dedede;
+  border-radius: 1.2rem;
+  font-size: 1rem;
+  color: #232526;
+  outline: none;
+  background: #fafafb;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.usuarios-form input:focus,
+.usuarios-form select:focus {
+  border: 1.7px solid #356eff;
+  box-shadow: 0 2px 10px #d3e2ff49;
+  background: #fff;
+}
+
+.usuarios-form button {
+  margin-top: 8px;
+  padding: 12px 0;
+  background: linear-gradient(90deg, #356eff 0%, #2584ff 100%);
+  color: #fff;
+  border: none;
+  border-radius: 1.1rem;
+  font-weight: bold;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 10px #347ae224;
+  cursor: pointer;
+  transition: background .16s, transform .13s;
+}
+
+.usuarios-form button:hover {
+  background: linear-gradient(90deg, #2584ff 0%, #356eff 100%);
+  transform: scale(1.04);
+}
+
+.usuarios-success {
+  margin-top: 16px;
+  color: #2e7d32;
+  background: #e4ffea;
+  border-radius: .9rem;
+  text-align: center;
+  padding: 0.8rem 0.7rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border: 1px solid #bbffc7;
+}
+
+.usuarios-error {
+  margin-top: 16px;
+  color: #d32f2f;
+  background: #ffeaea;
+  border-radius: .9rem;
+  text-align: center;
+  padding: 0.8rem 0.7rem;
+  font-size: 1rem;
+  font-weight: 500;
+  border: 1px solid #ffd3d3;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .usuarios-bg {
+    padding: 12px 0;
+  }
+  .usuarios-container {
+    border-radius: 1.2rem;
+    padding: 1.2rem 0.7rem;
+    max-width: 97vw;
+  }
+  .usuarios-container h2 {
+    font-size: 1.4rem;
+  }
+}

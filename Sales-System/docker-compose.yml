@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8
+    container_name: mysql-ventas
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ventasdb
+      MYSQL_USER: dark
+      MYSQL_PASSWORD: Dark230900.
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d
+    networks:
+      - backend
+    restart: unless-stopped
+
+  cliente-service:
+    build: ./cliente-service
+    image: registry.gitlab.com/adpilozo-espe/sistemaventas/cliente-service
+    container_name: cliente-service
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ventasdb
+      SPRING_DATASOURCE_USERNAME: dark
+      SPRING_DATASOURCE_PASSWORD: Dark230900.
+    depends_on:
+      - mysql
+    networks:
+      - backend
+    restart: unless-stopped
+
+  producto-service:
+    build: ./producto-service
+    image: registry.gitlab.com/adpilozo-espe/sistemaventas/producto-service
+    container_name: producto-service
+    ports:
+      - "8082:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ventasdb
+      SPRING_DATASOURCE_USERNAME: dark
+      SPRING_DATASOURCE_PASSWORD: Dark230900.
+    depends_on:
+      - mysql
+    networks:
+      - backend
+    restart: unless-stopped
+
+  usuario-service:
+    build: ./usuario-service
+    image: registry.gitlab.com/adpilozo-espe/sistemaventas/usuario-service
+    container_name: usuario-service
+    ports:
+      - "8083:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ventasdb
+      SPRING_DATASOURCE_USERNAME: dark
+      SPRING_DATASOURCE_PASSWORD: Dark230900.
+    depends_on:
+      - mysql
+    networks:
+      - backend
+    restart: unless-stopped
+
+  venta-service:
+    build: ./venta-service
+    image: registry.gitlab.com/adpilozo-espe/sistemaventas/venta-service
+    container_name: venta-service
+    ports:
+      - "8084:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ventasdb
+      SPRING_DATASOURCE_USERNAME: dark
+      SPRING_DATASOURCE_PASSWORD: Dark230900.
+    depends_on:
+      - mysql
+    networks:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+
+networks:
+  backend:

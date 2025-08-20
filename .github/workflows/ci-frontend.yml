@@ -1,0 +1,65 @@
+name: CI Frontend
+
+on:
+  push:
+    branches: [ "main" ]
+    paths: [ "front-sales/**", ".github/workflows/ci-frontend.yml" ]
+  pull_request:
+    branches: [ "main" ]
+    paths: [ "front-sales/**", ".github/workflows/ci-frontend.yml" ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: front-sales
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: front-sales/package-lock.json
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Lint (si existe)
+        run: |
+          if npm run | grep -q "lint"; then npm run lint; else echo "no lint"; fi
+
+      - name: Test (si existe)
+        run: |
+          if npm run | grep -q "test"; then npm test -- --ci; else echo "no tests"; fi
+
+      - name: Build (si existe)
+        run: |
+          if npm run | grep -q "build"; then npm run build; else echo "no build"; fi
+
+      - name: Subir artefacto de Pages
+        if: success() && hashFiles('front-sales/dist/**') != ''
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: front-sales/dist
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: needs.build-and-test.result == 'success'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy a GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

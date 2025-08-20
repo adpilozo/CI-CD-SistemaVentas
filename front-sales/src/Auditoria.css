@@ -1,0 +1,74 @@
+.auditoria-bg {
+  min-height: calc(100vh - 80px);
+  background: linear-gradient(135deg, #222327 0%, #33343c 100%);
+  padding: 40px 0;
+  width: 100vw;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+}
+
+.auditoria-container {
+  background: rgba(255,255,255,0.97);
+  border-radius: 2rem;
+  box-shadow: 0 10px 36px rgba(0,0,0,0.17), 0 0px 10px rgba(0,0,0,0.07);
+  padding: 2.5rem 2.2rem 2rem 2.2rem;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.auditoria-title {
+  font-size: 2.2rem;
+  font-weight: bold;
+  color: #232526;
+  margin-bottom: 1.7rem;
+  text-align: left;
+}
+
+.auditoria-error {
+  color: #d32f2f;
+  background: #ffeaea;
+  border-radius: .7rem;
+  text-align: center;
+  padding: 0.65rem 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 1.3rem;
+  border: 1px solid #ffd3d3;
+}
+
+.auditoria-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fafdff;
+  box-shadow: 0 1px 8px #d6e0f536;
+  border-radius: 1.1rem;
+  overflow: hidden;
+  margin-bottom: 10px;
+  font-size: 0.99rem;
+}
+
+.auditoria-table th, .auditoria-table td {
+  padding: 0.9rem 0.75rem;
+  text-align: left;
+  white-space: nowrap;
+  word-break: keep-all;
+}
+.auditoria-table th {
+  background: #f2f6fd;
+  color: #2361a7;
+  font-size: 1rem;
+  border-bottom: 2px solid #e2e6ef;
+}
+.auditoria-table td {
+  border-bottom: 1.3px solid #e7e9f3;
+  color: #222;
+}
+.auditoria-table tr:last-child td {
+  border-bottom: none;
+}
+.auditoria-table tbody tr:hover {
+  background: #f0f6ff;
+}
