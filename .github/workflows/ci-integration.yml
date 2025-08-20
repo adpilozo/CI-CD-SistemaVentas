@@ -24,11 +24,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Instalar utilidades (compose, curl, netcat)
+      # ⚠️ Nada de apt-get. Primero intentamos usar docker compose del runner;
+      # si falta, instalamos el plugin en ~/.docker/cli-plugins/
+      - name: Verificar/instalar Docker Compose v2 si hiciera falta
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y docker-compose-plugin curl netcat-traditional
-          docker compose version
+          set -e
+          if docker compose version >/dev/null 2>&1; then
+            echo "docker compose ya disponible"
+          else
+            echo "Instalando plugin docker compose v2 en ~/.docker/cli-plugins/ ..."
+            mkdir -p ~/.docker/cli-plugins
+            curl -L "https://github.com/docker/compose/releases/download/v2.27.0/docker-compose-linux-x86_64" \
+              -o ~/.docker/cli-plugins/docker-compose
+            chmod +x ~/.docker/cli-plugins/docker-compose
+            docker compose version
+          fi
 
       - name: Build imágenes locales
         run: docker compose -f "$COMPOSE_FILE" build
@@ -36,23 +47,24 @@ jobs:
       - name: Levantar stack
         run: docker compose -f "$COMPOSE_FILE" up -d
 
-      # Espera general: MySQL (3306) + puertos de microservicios (8081..8084)
-      - name: Esperar puertos (MySQL y servicios)
+      # Espera a que los puertos estén abiertos (MySQL + 4 servicios Spring)
+      - name: Esperar puertos (3306, 8081-8084)
+        shell: bash
         run: |
           set -e
           for port in 3306 8081 8082 8083 8084; do
             echo "Esperando puerto $port..."
             for i in {1..60}; do
-              if nc -z 127.0.0.1 $port; then
-                echo "Puerto $port OK"
-                break
+              if (echo > /dev/tcp/127.0.0.1/$port) >/dev/null 2>&1; then
+                echo "Puerto $port OK"; break
               fi
               sleep 5
             done
           done
 
-      # Smoke tests Spring: intenta primero /actuator/health y si no existe, / (raíz)
+      # Prueba /actuator/health si está habilitado; si no, prueba "/"
       - name: Smoke tests HTTP
+        shell: bash
         run: |
           set -e
           test_url () { curl -fsS "$1" >/dev/null 2>&1; }
