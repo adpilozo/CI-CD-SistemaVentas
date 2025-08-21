@@ -2,10 +2,12 @@ package com.dark.clienteservice.controller;
 
 import com.dark.clienteservice.model.Cliente;
 import com.dark.clienteservice.service.ClienteService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 @RestController
 @RequestMapping("/clientes")
 public class ClienteController {
@@ -14,6 +16,13 @@ public class ClienteController {
 
     public ClienteController(ClienteService service) {
         this.service = service;
+    }
+
+    // === NUEVO: búsqueda pública por identificación (ej: phone) ===
+    @GetMapping("/identification/{identificacion}")
+    public ResponseEntity<Cliente> buscarPorIdentificacion(@PathVariable String identificacion) {
+        Cliente c = service.findByIdentificacion(identificacion);
+        return (c != null) ? ResponseEntity.ok(c) : ResponseEntity.notFound().build();
     }
 
     @PostMapping

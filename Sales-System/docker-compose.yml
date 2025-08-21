@@ -55,7 +55,7 @@ services:
     image: registry.gitlab.com/adpilozo-espe/sistemaventas/usuario-service
     container_name: usuario-service
     ports:
-      - "8083:8080"
+      - "8083:8083"   # <- corregido: host 8083 -> contenedor 8083
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ventasdb
       SPRING_DATASOURCE_USERNAME: dark

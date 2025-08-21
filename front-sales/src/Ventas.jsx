@@ -18,6 +18,7 @@ function Ventas() {
   const [busqueda, setBusqueda] = useState("");
 
   const getToken = () => localStorage.getItem("token");
+
   const getUserIdFromToken = () => {
     const token = getToken();
     if (!token) return null;
@@ -31,7 +32,6 @@ function Ventas() {
 
   useEffect(() => {
     fetchProductos();
-    // eslint-disable-next-line
   }, []);
 
   const fetchProductos = async () => {
@@ -49,6 +49,7 @@ function Ventas() {
   const buscarCliente = async () => {
     setCliente(null);
     setClienteError("");
+
     if (!identificationNumber) return;
 
     try {
@@ -68,7 +69,6 @@ function Ventas() {
     }
   };
 
-  // --- Esta función es la que causaba el error si no estaba:
   const toggleVenta = () => {
     setVentaActiva(!ventaActiva);
     setIdentificationNumber("");
@@ -107,9 +107,7 @@ function Ventas() {
     setExito("");
 
     if (!cliente) {
-      setError(
-        "Debes buscar y seleccionar un cliente válido antes de generar la venta."
-      );
+      setError("Debes buscar y seleccionar un cliente válido antes de generar la venta.");
       return;
     }
     if (Object.keys(itemsSeleccionados).length === 0) {
@@ -124,16 +122,14 @@ function Ventas() {
         userId: userId,
         customerId: cliente.id,
       },
-      items: Object.entries(itemsSeleccionados).map(
-        ([productId, quantity]) => {
-          const prod = productos.find((p) => p.id === parseInt(productId));
-          return {
-            productId: parseInt(productId),
-            quantity,
-            price: prod.price,
-          };
-        }
-      ),
+      items: Object.entries(itemsSeleccionados).map(([productId, quantity]) => {
+        const prod = productos.find((p) => p.id === parseInt(productId));
+        return {
+          productId: parseInt(productId),
+          quantity,
+          price: prod.price,
+        };
+      }),
     };
 
     try {
@@ -144,26 +140,13 @@ function Ventas() {
       const ventaCreada = response.data;
       const ventaId = ventaCreada.id;
 
-      // Descargar factura con token
-      const pdfResponse = await axios.get(`${SALES_API}/${ventaId}/invoice`, {
-        headers: { Authorization: `Bearer ${getToken()}` },
-        responseType: "blob",
-      });
-
-      const pdfBlob = new Blob([pdfResponse.data], { type: "application/pdf" });
-      const pdfUrl = window.URL.createObjectURL(pdfBlob);
-      window.open(pdfUrl);
+      // ✅ Llamada simple: el backend imprime la factura en consola
+      await axios.get(`${SALES_API}/${ventaId}/invoice`);
 
       setExito("Venta creada correctamente.");
-      setVentaActiva(false);
-      setIdentificationNumber("");
-      setCliente(null);
-      setClienteError("");
-      setItemsSeleccionados({});
-      setBusqueda("");
-      setError("");
+      toggleVenta();
     } catch {
-      setError("Error al crear la venta o descargar la factura.");
+      setError("Error al crear la venta.");
     }
   };
 
@@ -171,7 +154,6 @@ function Ventas() {
     prod.name.toLowerCase().includes(busqueda.toLowerCase())
   );
 
-  // Calcular total de la venta
   const totalVenta = Object.entries(itemsSeleccionados).reduce(
     (total, [productId, qty]) => {
       const producto = productos.find((p) => p.id === parseInt(productId));

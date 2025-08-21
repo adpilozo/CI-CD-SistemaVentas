@@ -21,12 +21,23 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
+        http
+                .cors(cors -> {}) // habilita CORS
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // ✅ Permitimos preflight OPTIONS (CORS)
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // ✅ Permitimos descargas de factura (ej: /sales/15/invoice)
+                        .requestMatchers(HttpMethod.GET, "/sales/**/invoice").permitAll()
+
+                        // 🔒 Reglas protegidas
                         .requestMatchers(HttpMethod.GET, "/sales/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/sales/**").hasAnyRole("admin", "empleado")
-                        .requestMatchers(HttpMethod.PUT, "/sales/**").hasAnyRole("admin", "empleado")
-                        .requestMatchers(HttpMethod.DELETE, "/sales/**").hasRole("admin")
+                        .requestMatchers(HttpMethod.POST, "/sales/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/sales/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/sales/**").authenticated()
+
+                        // cualquier otra request requiere auth
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

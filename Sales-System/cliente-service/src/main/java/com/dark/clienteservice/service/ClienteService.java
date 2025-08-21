@@ -10,30 +10,43 @@ import java.util.Optional;
 @Service
 public class ClienteService {
 
-    private final ClienteRepository repository;
+    private final ClienteRepository repo;
 
-    public ClienteService(ClienteRepository repository) {
-        this.repository = repository;
+    public ClienteService(ClienteRepository repo) {
+        this.repo = repo;
+    }
+
+    // === NUEVO: buscar por identificación (phone) ===
+    public Cliente findByIdentificacion(String identificacion) {
+        return repo.findByPhone(identificacion).orElse(null);
+        // Si quieres fallback por email:
+        // return repo.findByPhone(identificacion).orElseGet(
+        //        () -> repo.findByEmail(identificacion).orElse(null));
     }
 
     public Cliente create(Cliente cliente) {
-        return repository.save(cliente);
+        return repo.save(cliente);
     }
 
     public List<Cliente> findAll() {
-        return repository.findAll();
+        return repo.findAll();
     }
 
     public Optional<Cliente> findById(Long id) {
-        return repository.findById(id);
+        return repo.findById(id);
     }
 
     public Cliente update(Long id, Cliente cliente) {
-        cliente.setId(id);
-        return repository.save(cliente);
+        return repo.findById(id).map(c -> {
+            c.setName(cliente.getName());
+            c.setEmail(cliente.getEmail());
+            c.setPhone(cliente.getPhone());
+            c.setAddress(cliente.getAddress());
+            return repo.save(c);
+        }).orElse(null);
     }
 
     public void delete(Long id) {
-        repository.deleteById(id);
+        repo.deleteById(id);
     }
 }
