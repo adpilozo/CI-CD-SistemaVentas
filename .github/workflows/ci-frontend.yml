@@ -1,0 +1,126 @@
+name: CI Frontend
+
+on:
+  push:
+    branches: [ "main" ]
+    paths: [ "front-sales/**", ".github/workflows/ci-frontend.yml" ]
+  pull_request:
+    branches: [ "main" ]
+    paths: [ "front-sales/**", ".github/workflows/ci-frontend.yml" ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      WORKDIR: front-sales
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ✅ comprobamos que existe el frontend
+      - name: Verificar que existe front-sales
+        id: chk
+        run: |
+          if [ -f "$WORKDIR/package.json" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "No existe $WORKDIR/package.json; se omite el job."
+          fi
+
+      - name: Detectar gestor (pnpm/yarn/npm)
+        if: steps.chk.outputs.exists == 'true'
+        id: detect
+        shell: bash
+        run: |
+          if [ -f "$WORKDIR/pnpm-lock.yaml" ]; then
+            echo "pm=pnpm" >> $GITHUB_OUTPUT
+          elif [ -f "$WORKDIR/yarn.lock" ]; then
+            echo "pm=yarn" >> $GITHUB_OUTPUT
+          else
+            echo "pm=npm" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node 20
+        if: steps.chk.outputs.exists == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: ${{ steps.detect.outputs.pm == 'yarn' && 'yarn' || (steps.detect.outputs.pm == 'pnpm' && 'pnpm' || 'npm') }}
+          cache-dependency-path: |
+            front-sales/package-lock.json
+            front-sales/pnpm-lock.yaml
+            front-sales/yarn.lock
+
+      - name: Instalar pnpm si aplica
+        if: steps.chk.outputs.exists == 'true' && steps.detect.outputs.pm == 'pnpm'
+        run: npm i -g pnpm
+
+      - name: Instalar dependencias
+        if: steps.chk.outputs.exists == 'true'
+        shell: bash
+        run: |
+          cd "$WORKDIR"
+          case "${{ steps.detect.outputs.pm }}" in
+            pnpm) pnpm install --frozen-lockfile || pnpm install ;;
+            yarn) yarn install --frozen-lockfile || yarn install ;;
+            npm)  if [ -f package-lock.json ]; then npm ci || npm install; else npm install; fi ;;
+          esac
+
+      # Lint NO bloqueante
+      - name: Lint (no bloqueante)
+        if: steps.chk.outputs.exists == 'true'
+        continue-on-error: true
+        shell: bash
+        run: |
+          cd "$WORKDIR"
+          if jq -e '.scripts.lint' package.json >/dev/null 2>&1; then
+            case "${{ steps.detect.outputs.pm }}" in
+              pnpm) pnpm run lint ;;
+              yarn) yarn lint ;;
+              npm)  npm run lint ;;
+            esac
+          else
+            echo "no lint"
+          fi
+
+      - name: Build
+        if: steps.chk.outputs.exists == 'true'
+        id: build
+        shell: bash
+        run: |
+          cd "$WORKDIR"
+          case "${{ steps.detect.outputs.pm }}" in
+            pnpm) pnpm run build ;;
+            yarn) yarn build ;;
+            npm)  npm run build ;;
+          esac
+          if [ -d dist ]; then
+            echo "out=front-sales/dist" >> $GITHUB_OUTPUT
+          elif [ -d build ]; then
+            echo "out=front-sales/build" >> $GITHUB_OUTPUT
+          else
+            echo "No se encontró carpeta de build"; exit 1
+          fi
+
+      - name: Subir artefacto de Pages
+        if: steps.chk.outputs.exists == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ steps.build.outputs.out }}
+
+  deploy:
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy a GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
